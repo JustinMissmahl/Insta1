@@ -6,9 +6,9 @@ export const siteConfig = {
   shortName: "Insta74",
   creator: "Amaruthesh",
   description:
-    "Fast, free, and no login required. Just paste the URL and download.",
+    "Fast, free, and no login required. Just paste the link and download.",
   ogDescription:
-    "Fast, free, and no login required. Just paste the URL and download.",
+    "Fast, free, and no login required. Just paste the link and download.",
   url: "https://insta74downloader-amrusirs-projects.vercel.app/",
 };
 
