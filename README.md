@@ -87,7 +87,7 @@ Follow these steps to set up and run the project locally:
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/riad-azz/instagram-video-downloader.git
+   https://github.com/AMRUSIR/instagram-video-downloader.git
    ```
 
    ```bash
