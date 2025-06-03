@@ -2,14 +2,14 @@ import { Metadata } from "next";
 
 export const siteConfig = {
   name: "INSTA74",
-  domain: "insta74.vercel.com",
+  domain: "https://insta74downloader-amrusirs-projects.vercel.app/",
   shortName: "Insta74",
   creator: "Amaruthesh",
   description:
     "Fast, free, and no login required. Just paste the URL and download.",
   ogDescription:
     "Fast, free, and no login required. Just paste the URL and download.",
-  url: "https://gram-grabberz.vercel.com",
+  url: "https://insta74downloader-amrusirs-projects.vercel.app/",
 };
 
 export const siteMetadata: Metadata = {
