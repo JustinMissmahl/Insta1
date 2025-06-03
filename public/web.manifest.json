@@ -1,6 +1,6 @@
 {
-  "name": "Gram Grabberz",
-  "short_name": "GramGrabberz",
+  "name": "Insta74",
+  "short_name": "Insta74",
   "description": "Fast, free, and no login required. Just paste the URL and download.",
   "start_url": "/",
   "display": "standalone",
@@ -17,16 +17,16 @@
     "Instagram video downloader",
     "download IG videos",
     "Instagram video saver",
-    "Instagram video grabber",
+    "Instagram video insta74",
     "Instagram video saver free",
     "Instagram video downloader free",
-    "Instagram video grabber free",
+    "Instagram video insta74 free",
     "Instagram video saver app",
-    "Instagram video grabber app"
+    "Instagram video insta74 app"
   ],
-  "author": "riad-azz",
-  "copyright": "© 2025 riad-azz. All rights reserved.",
+  "author": "Amaruthesh",
+  "copyright": "© 2025 amruthesh. All rights reserved.",
   "rating": "General",
-  "apple-mobile-web-app-title": "Gram Grabberz",
+  "apple-mobile-web-app-title": "Insta74",
   "apple-mobile-web-app-status-bar-style": "black-translucent"
 }
