@@ -166,3 +166,52 @@ sudo ufw enable
 For a production environment, it is highly recommended to run the API behind a reverse proxy like Nginx and secure it with an SSL certificate from Let's Encrypt. This is a more advanced topic but provides significant security and performance benefits.
 
 Congratulations! Your Instagram Downloader bot and API should now be running in production on your IONOS VPS. 
+
+## What Should You Do After Pulling Updates?
+
+When you pull new changes from your Git repository, you need to rebuild the applications and restart the services to apply the updates. Here’s the process:
+
+1.  **Pull the latest code**:
+    Navigate to your project directory and pull the latest changes from your `master` branch (or any other branch you are using).
+
+    ```bash
+    cd /root/projects/mediav1/Insta1
+    git pull origin master
+    ```
+
+2.  **Rebuild the Applications**:
+    You need to rebuild both the API and the Telegram bot to create new executables with the latest code.
+
+    *   **Build `go-api`**:
+        ```bash
+        cd go-api
+        go build -o instagram-api-linux
+        cd ..
+        ```
+
+    *   **Build `go-tgbot`**:
+        ```bash
+        cd go-tgbot
+        go build -o tgbot-linux
+        cd ..
+        ```
+
+3.  **Restart the Services**:
+    After rebuilding, restart the `systemd` services to run the new executables.
+
+    ```bash
+    sudo systemctl restart instagram-api
+    sudo systemctl restart tgbot
+    ```
+
+4.  **Verify the Services**:
+    Check the status and logs to ensure both services have restarted correctly and are running without errors.
+
+    ```bash
+    sudo systemctl status instagram-api
+    sudo systemctl status tgbot
+    
+    sudo journalctl -u tgbot -f --since "1 minute ago"
+    ```
+
+By following these steps, you can ensure that your production environment is always running the latest version of your code. 
