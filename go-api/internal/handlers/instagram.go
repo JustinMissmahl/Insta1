@@ -15,10 +15,15 @@ type InstagramHandler struct {
 	igClient *instagram.Client
 }
 
+// InstagramHandlerConfig holds the dependencies for the Instagram handler.
+type InstagramHandlerConfig struct {
+	SessionIDs []string
+}
+
 // NewInstagramHandler creates a new Instagram handler
-func NewInstagramHandler() *InstagramHandler {
+func NewInstagramHandler(config InstagramHandlerConfig) *InstagramHandler {
 	return &InstagramHandler{
-		igClient: instagram.NewClient(),
+		igClient: instagram.NewClient(config.SessionIDs),
 	}
 }
 

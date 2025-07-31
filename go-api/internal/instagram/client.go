@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
+	"time"
 
 	"instagram-downloader-api/internal/types"
 )
@@ -18,14 +21,42 @@ const (
 
 // Client represents the Instagram GraphQL client
 type Client struct {
-	httpClient *http.Client
+	httpClient          *http.Client
+	sessionIDs          []string
+	mu                  sync.Mutex
+	currentSessionIndex int
 }
 
-// NewClient creates a new Instagram client
-func NewClient() *Client {
-	return &Client{
-		httpClient: &http.Client{},
+// NewClient creates a new Instagram client with session IDs for rotation
+func NewClient(sessionIDs []string) *Client {
+	// Seed the random number generator
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	// Start with a random session ID to distribute load
+	initialIndex := 0
+	if len(sessionIDs) > 0 {
+		initialIndex = rand.Intn(len(sessionIDs))
 	}
+
+	return &Client{
+		httpClient:          &http.Client{},
+		sessionIDs:          sessionIDs,
+		currentSessionIndex: initialIndex,
+	}
+}
+
+// getNextSessionID rotates through the available session IDs.
+func (c *Client) getNextSessionID() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if len(c.sessionIDs) == 0 {
+		return ""
+	}
+
+	sessionID := c.sessionIDs[c.currentSessionIndex]
+	c.currentSessionIndex = (c.currentSessionIndex + 1) % len(c.sessionIDs)
+	return sessionID
 }
 
 // generateRequestBody creates the form-encoded request body for Instagram GraphQL
@@ -98,6 +129,12 @@ func (c *Client) GetPostGraphQL(shortcode string) (*types.IGGraphQLResponseDto, 
 	req.Header.Set("Pragma", "no-cache")
 	req.Header.Set("Cache-Control", "no-cache")
 	req.Header.Set("Referer", fmt.Sprintf("https://www.instagram.com/p/%s/", shortcode))
+
+	// Get the next session ID and add it as a cookie
+	sessionID := c.getNextSessionID()
+	if sessionID != "" {
+		req.Header.Set("Cookie", fmt.Sprintf("sessionid=%s", sessionID))
+	}
 
 	// Execute request
 	resp, err := c.httpClient.Do(req)

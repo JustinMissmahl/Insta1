@@ -1,6 +1,10 @@
 package server
 
 import (
+	"log"
+	"os"
+	"strings"
+
 	"instagram-downloader-api/internal/handlers"
 	"instagram-downloader-api/internal/middleware"
 
@@ -20,8 +24,25 @@ func New() *gin.Engine {
 	router.Use(gin.Recovery())
 	router.Use(middleware.CORS())
 
+	// --- Load Instagram Session IDs from environment variable ---
+	// It's recommended to store your session IDs in an environment variable,
+	// separated by commas.
+	// Example: INSTAGRAM_SESSION_IDS="sessionid1,sessionid2,sessionid3"
+	sessionIDsStr := os.Getenv("INSTAGRAM_SESSION_IDS")
+	if sessionIDsStr == "" {
+		log.Println("WARNING: INSTAGRAM_SESSION_IDS environment variable not set. Requests to Instagram will be anonymous and are likely to be rate-limited.")
+	}
+	sessionIDs := strings.Split(sessionIDsStr, ",")
+	// Trim whitespace from each session ID
+	for i, id := range sessionIDs {
+		sessionIDs[i] = strings.TrimSpace(id)
+	}
+	// ---
+
 	// Create handlers
-	instagramHandler := handlers.NewInstagramHandler()
+	instagramHandler := handlers.NewInstagramHandler(handlers.InstagramHandlerConfig{
+		SessionIDs: sessionIDs,
+	})
 	downloadHandler := handlers.NewDownloadHandler()
 
 	// Health check endpoint
