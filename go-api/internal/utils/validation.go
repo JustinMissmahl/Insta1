@@ -7,14 +7,14 @@ import (
 
 // IsShortcodePresent checks if a URL contains a valid Instagram shortcode
 func IsShortcodePresent(url string) bool {
-	regex := regexp.MustCompile(`/(p|reel)/([a-zA-Z0-9_-]+)/?`)
+	regex := regexp.MustCompile(`/(p|reel|reels)/([a-zA-Z0-9_-]+)/?`)
 	matches := regex.FindStringSubmatch(url)
 	return len(matches) >= 3 && matches[2] != ""
 }
 
 // GetPostShortcode extracts the shortcode from an Instagram URL
 func GetPostShortcode(url string) string {
-	regex := regexp.MustCompile(`/(p|reel)/([a-zA-Z0-9_-]+)/?`)
+	regex := regexp.MustCompile(`/(p|reel|reels)/([a-zA-Z0-9_-]+)/?`)
 	matches := regex.FindStringSubmatch(url)
 
 	if len(matches) >= 3 && matches[2] != "" {

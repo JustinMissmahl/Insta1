@@ -4,7 +4,7 @@ import "regexp"
 
 // extractShortcode extracts shortcode from Instagram URL
 func ExtractShortcode(instagramURL string) string {
-	regex := regexp.MustCompile(`/(p|reel)/([a-zA-Z0-9_-]+)/?`)
+	regex := regexp.MustCompile(`/(p|reel|reels)/([a-zA-Z0-9_-]+)/?`)
 	matches := regex.FindStringSubmatch(instagramURL)
 
 	if len(matches) >= 3 && matches[2] != "" {

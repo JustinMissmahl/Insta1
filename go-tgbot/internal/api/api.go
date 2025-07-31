@@ -134,3 +134,59 @@ func (c *Client) DownloadVideo(videoURL, shortcode, downloadPath string) (string
 
 	return "", fmt.Errorf("failed to download video for %s after %d retries: %w", shortcode, maxRetries, lastErr)
 }
+
+func (c *Client) DownloadImage(imageURL, shortcode, downloadPath string) (string, error) {
+	if _, err := os.Stat(downloadPath); os.IsNotExist(err) {
+		if err := os.MkdirAll(downloadPath, os.ModePerm); err != nil {
+			return "", fmt.Errorf("failed to create download directory: %w", err)
+		}
+	}
+
+	filePath := filepath.Join(downloadPath, fmt.Sprintf("%s.jpg", shortcode))
+
+	out, err := os.Create(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to create file: %w", err)
+	}
+	defer out.Close()
+
+	var lastErr error
+	maxRetries := 3
+	retryDelay := 1 * time.Second
+
+	for i := 0; i < maxRetries; i++ {
+		resp, err := c.httpClient.Get(imageURL)
+		if err != nil {
+			lastErr = fmt.Errorf("failed to download image: %w", err)
+			log.Printf("Attempt %d to download image for %s failed: %v. Retrying in %v...", i+1, shortcode, err, retryDelay)
+			time.Sleep(retryDelay)
+			retryDelay *= 2
+			continue
+		}
+
+		if resp.StatusCode == http.StatusOK {
+			defer resp.Body.Close()
+			_, err = io.Copy(out, resp.Body)
+			if err != nil {
+				// If copy fails, we can't really recover, so just fail.
+				return "", fmt.Errorf("failed to save image: %w", err)
+			}
+			return filePath, nil
+		}
+
+		resp.Body.Close() // close body if not OK
+		lastErr = fmt.Errorf("unexpected status code while downloading: %d", resp.StatusCode)
+
+		if resp.StatusCode == http.StatusTooManyRequests {
+			log.Printf("Attempt %d: Rate limit hit downloading image for %s. Retrying in %v...", i+1, shortcode, retryDelay)
+			time.Sleep(retryDelay)
+			retryDelay *= 2
+			continue
+		}
+
+		// Fail on other non-OK statuses
+		return "", lastErr
+	}
+
+	return "", fmt.Errorf("failed to download image for %s after %d retries: %w", shortcode, maxRetries, lastErr)
+}

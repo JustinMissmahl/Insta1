@@ -51,12 +51,6 @@ func (h *InstagramHandler) GetInstagramPost(c *gin.Context) {
 			return
 		}
 
-		// Check if it's a video
-		if !response.Data.XdtShortcodeMedia.IsVideo {
-			utils.RespondWithError(c, http.StatusBadRequest, "notVideo", "post is not a video")
-			return
-		}
-
 		// Return successful response matching Next.js structure
 		utils.RespondWithData(c, http.StatusOK, response.Data)
 		return

@@ -63,25 +63,36 @@ func (h *BotHandler) handleMessage(ctx context.Context, b *bot.Bot, update *mode
 		return
 	}
 
-	if !postData.IsVideo {
+	var filePath string
+	var mediaType string
+	var downloadErr error
+
+	if postData.IsVideo {
+		mediaType = "video"
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
-			Text:   "This post is not a video.",
+			Text:   fmt.Sprintf("Downloading video by %s...", postData.Owner.Username),
 		})
-		return
+		filePath, downloadErr = h.apiClient.DownloadVideo(postData.VideoURL, shortcode, downloadPath)
+	} else {
+		mediaType = "image"
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   fmt.Sprintf("Downloading image by %s...", postData.Owner.Username),
+		})
+		// Get the highest resolution image
+		imageURL := postData.DisplayUrl
+		if len(postData.DisplayResources) > 0 {
+			imageURL = postData.DisplayResources[len(postData.DisplayResources)-1].Src
+		}
+		filePath, downloadErr = h.apiClient.DownloadImage(imageURL, shortcode, downloadPath)
 	}
 
-	b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: update.Message.Chat.ID,
-		Text:   fmt.Sprintf("Downloading video by %s...", postData.Owner.Username),
-	})
-
-	filePath, err := h.apiClient.DownloadVideo(postData.VideoURL, shortcode, downloadPath)
-	if err != nil {
-		log.Printf("Failed to download video for shortcode %s: %v", shortcode, err)
+	if downloadErr != nil {
+		log.Printf("Failed to download %s for shortcode %s: %v", mediaType, shortcode, downloadErr)
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
-			Text:   "Failed to download video.",
+			Text:   fmt.Sprintf("Failed to download %s.", mediaType),
 		})
 		return
 	}
@@ -89,37 +100,47 @@ func (h *BotHandler) handleMessage(ctx context.Context, b *bot.Bot, update *mode
 
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
-		Text:   "Download complete. Sending video...",
+		Text:   fmt.Sprintf("Download complete. Sending %s...", mediaType),
 	})
 
-	caption := fmt.Sprintf("Video by %s (@%s)", postData.Owner.FullName, postData.Owner.Username)
+	caption := fmt.Sprintf("%s by %s (@%s)", mediaType, postData.Owner.FullName, postData.Owner.Username)
 
-	videoFile, err := os.Open(filePath)
+	mediaFile, err := os.Open(filePath)
 	if err != nil {
-		log.Printf("Failed to open video file %s: %v", filePath, err)
+		log.Printf("Failed to open %s file %s: %v", mediaType, filePath, err)
 		return
 	}
-	defer videoFile.Close()
+	defer mediaFile.Close()
 
-	videoData, err := io.ReadAll(videoFile)
+	mediaData, err := io.ReadAll(mediaFile)
 	if err != nil {
-		log.Printf("Failed to read video file %s: %v", filePath, err)
+		log.Printf("Failed to read %s file %s: %v", mediaType, filePath, err)
 		return
 	}
 
-	_, err = b.SendVideo(ctx, &bot.SendVideoParams{
-		ChatID:  update.Message.Chat.ID,
-		Video:   &models.InputFileUpload{Filename: fmt.Sprintf("%s.mp4", shortcode), Data: bytes.NewReader(videoData)},
-		Caption: caption,
-	})
-	if err != nil {
-		log.Printf("Failed to send video for shortcode %s: %v", shortcode, err)
+	var sendErr error
+	if postData.IsVideo {
+		_, sendErr = b.SendVideo(ctx, &bot.SendVideoParams{
+			ChatID:  update.Message.Chat.ID,
+			Video:   &models.InputFileUpload{Filename: fmt.Sprintf("%s.mp4", shortcode), Data: bytes.NewReader(mediaData)},
+			Caption: caption,
+		})
+	} else {
+		_, sendErr = b.SendPhoto(ctx, &bot.SendPhotoParams{
+			ChatID:  update.Message.Chat.ID,
+			Photo:   &models.InputFileUpload{Filename: fmt.Sprintf("%s.jpg", shortcode), Data: bytes.NewReader(mediaData)},
+			Caption: caption,
+		})
+	}
+
+	if sendErr != nil {
+		log.Printf("Failed to send %s for shortcode %s: %v", mediaType, shortcode, sendErr)
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
-			Text:   "Failed to send video.",
+			Text:   fmt.Sprintf("Failed to send %s.", mediaType),
 		})
 		return
 	}
 
-	log.Printf("Successfully sent video for shortcode %s", shortcode)
+	log.Printf("Successfully sent %s for shortcode %s", mediaType, shortcode)
 }
