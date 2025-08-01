@@ -12,7 +12,10 @@ import (
 )
 
 func New() *gin.Engine {
-	gin.SetMode(gin.DebugMode)
+	mode := os.Getenv("GIN_MODE")
+	if mode == "" {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	router := gin.New()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
