@@ -19,7 +19,6 @@ const (
 	userAgent           = "Mozilla/5.0 (Linux; Android 11; SAMSUNG SM-G973U) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/14.2 Chrome/87.0.4280.141 Mobile Safari/537.36"
 )
 
-// Client represents the Instagram GraphQL client
 type Client struct {
 	httpClient          *http.Client
 	sessionIDs          []string
@@ -27,17 +26,12 @@ type Client struct {
 	currentSessionIndex int
 }
 
-// NewClient creates a new Instagram client with session IDs for rotation
 func NewClient(sessionIDs []string) *Client {
-	// Seed the random number generator
 	rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	// Start with a random session ID to distribute load
 	initialIndex := 0
 	if len(sessionIDs) > 0 {
 		initialIndex = rand.Intn(len(sessionIDs))
 	}
-
 	return &Client{
 		httpClient:          &http.Client{},
 		sessionIDs:          sessionIDs,
@@ -45,21 +39,17 @@ func NewClient(sessionIDs []string) *Client {
 	}
 }
 
-// getNextSessionID rotates through the available session IDs.
 func (c *Client) getNextSessionID() string {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-
 	if len(c.sessionIDs) == 0 {
 		return ""
 	}
-
 	sessionID := c.sessionIDs[c.currentSessionIndex]
 	c.currentSessionIndex = (c.currentSessionIndex + 1) % len(c.sessionIDs)
 	return sessionID
 }
 
-// generateRequestBody creates the form-encoded request body for Instagram GraphQL
 func generateRequestBody(shortcode string) string {
 	variables := map[string]interface{}{
 		"shortcode":               shortcode,
@@ -67,11 +57,9 @@ func generateRequestBody(shortcode string) string {
 		"hoisted_comment_id":      nil,
 		"hoisted_reply_id":        nil,
 	}
-	docID := "8845758582119845" // Post query doc_id
+	docID := "8845758582119845"
 	friendlyName := "PolarisPostActionLoadPostQueryQuery"
-
 	variablesJSON, _ := json.Marshal(variables)
-
 	values := url.Values{}
 	values.Set("av", "0")
 	values.Set("__d", "www")
@@ -98,25 +86,18 @@ func generateRequestBody(shortcode string) string {
 	values.Set("variables", string(variablesJSON))
 	values.Set("server_timestamps", "true")
 	values.Set("doc_id", docID)
-
 	return values.Encode()
 }
 
-// GetPostGraphQL fetches Instagram post data using GraphQL
 func (c *Client) GetPostGraphQL(shortcode string) (*types.IGGraphQLResponseDto, int, error) {
-	// Generate request body
 	requestBody := generateRequestBody(shortcode)
 	if requestBody == "" {
 		return nil, 0, fmt.Errorf("failed to generate request body")
 	}
-
-	// Create request
 	req, err := http.NewRequest("POST", instagramGraphQLURL, strings.NewReader(requestBody))
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to create request: %w", err)
 	}
-
-	// Set headers
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Accept-Language", "en-US,en;q=0.5")
@@ -134,30 +115,21 @@ func (c *Client) GetPostGraphQL(shortcode string) (*types.IGGraphQLResponseDto, 
 	req.Header.Set("Pragma", "no-cache")
 	req.Header.Set("Cache-Control", "no-cache")
 	req.Header.Set("Referer", fmt.Sprintf("https://www.instagram.com/p/%s/", shortcode))
-
-	// Add session cookie
 	if sessionID := c.getNextSessionID(); sessionID != "" {
 		req.Header.Set("Cookie", fmt.Sprintf("sessionid=%s", sessionID))
 	}
-
-	// Execute request
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to execute request: %w", err)
 	}
 	defer resp.Body.Close()
-
-	// Read response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, resp.StatusCode, fmt.Errorf("failed to read response body: %w", err)
 	}
-
-	// Parse JSON response
 	var igResponse types.IGGraphQLResponseDto
 	if err := json.Unmarshal(body, &igResponse); err != nil {
 		return nil, resp.StatusCode, fmt.Errorf("failed to parse response JSON: %w", err)
 	}
-
 	return &igResponse, resp.StatusCode, nil
 }

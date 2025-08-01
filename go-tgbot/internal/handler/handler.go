@@ -36,8 +36,22 @@ func (h *BotHandler) Register(b *bot.Bot) {
 }
 
 func (h *BotHandler) handleMessage(ctx context.Context, b *bot.Bot, update *models.Update) {
-	log.Printf("Received message from %s: %s", update.Message.From.Username, update.Message.Text)
-
+	log.Printf("Received message from %s (ID: %d): %s", update.Message.From.Username, update.Message.From.ID, update.Message.Text)
+	isAllowed := false
+	for _, allowedID := range h.cfg.AllowedUserIDs {
+		if allowedID == update.Message.From.ID {
+			isAllowed = true
+			break
+		}
+	}
+	if !isAllowed {
+		log.Printf("Unauthorized access attempt from user ID %d (%s)", update.Message.From.ID, update.Message.From.Username)
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "Sorry, you are not authorized to use this bot.",
+		})
+		return
+	}
 	shortcode := util.ExtractShortcode(update.Message.Text)
 	if shortcode == "" {
 		log.Printf("Invalid URL: %s", update.Message.Text)
@@ -47,12 +61,10 @@ func (h *BotHandler) handleMessage(ctx context.Context, b *bot.Bot, update *mode
 		})
 		return
 	}
-
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
 		Text:   "Processing your request...",
 	})
-
 	postData, err := h.apiClient.GetInstagramPostData(shortcode)
 	if err != nil {
 		log.Printf("Failed to get post data for shortcode %s: %v", shortcode, err)
@@ -62,38 +74,31 @@ func (h *BotHandler) handleMessage(ctx context.Context, b *bot.Bot, update *mode
 		})
 		return
 	}
-
 	var filePath string
 	var mediaType string
 	var downloadErr error
 	var owner string
 	var mediaURL string
-
-	// Get post/reel media info
 	owner = postData.XdtShortcodeMedia.Owner.Username
 	if postData.XdtShortcodeMedia.IsVideo {
 		mediaType = "video"
 		mediaURL = postData.XdtShortcodeMedia.VideoURL
 	} else {
 		mediaType = "image"
-		// Get the highest resolution image
 		mediaURL = postData.XdtShortcodeMedia.DisplayUrl
 		if len(postData.XdtShortcodeMedia.DisplayResources) > 0 {
 			mediaURL = postData.XdtShortcodeMedia.DisplayResources[len(postData.XdtShortcodeMedia.DisplayResources)-1].Src
 		}
 	}
-
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
 		Text:   fmt.Sprintf("Downloading %s by %s...", mediaType, owner),
 	})
-
 	if mediaType == "video" {
 		filePath, downloadErr = h.apiClient.DownloadVideo(mediaURL, shortcode, downloadPath)
 	} else {
 		filePath, downloadErr = h.apiClient.DownloadImage(mediaURL, shortcode, downloadPath)
 	}
-
 	if downloadErr != nil {
 		log.Printf("Failed to download %s for shortcode %s: %v", mediaType, shortcode, downloadErr)
 		b.SendMessage(ctx, &bot.SendMessageParams{
@@ -102,28 +107,23 @@ func (h *BotHandler) handleMessage(ctx context.Context, b *bot.Bot, update *mode
 		})
 		return
 	}
-	defer os.Remove(filePath) // Defer deletion of the file
-
+	defer os.Remove(filePath)
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
 		Text:   fmt.Sprintf("Download complete. Sending %s...", mediaType),
 	})
-
 	caption := fmt.Sprintf("%s by %s (@%s)", mediaType, postData.XdtShortcodeMedia.Owner.FullName, postData.XdtShortcodeMedia.Owner.Username)
-
 	mediaFile, err := os.Open(filePath)
 	if err != nil {
 		log.Printf("Failed to open %s file %s: %v", mediaType, filePath, err)
 		return
 	}
 	defer mediaFile.Close()
-
 	mediaData, err := io.ReadAll(mediaFile)
 	if err != nil {
 		log.Printf("Failed to read %s file %s: %v", mediaType, filePath, err)
 		return
 	}
-
 	var sendErr error
 	if mediaType == "video" {
 		_, sendErr = b.SendVideo(ctx, &bot.SendVideoParams{
@@ -138,7 +138,6 @@ func (h *BotHandler) handleMessage(ctx context.Context, b *bot.Bot, update *mode
 			Caption: caption,
 		})
 	}
-
 	if sendErr != nil {
 		log.Printf("Failed to send %s for shortcode %s: %v", mediaType, shortcode, sendErr)
 		b.SendMessage(ctx, &bot.SendMessageParams{
@@ -147,6 +146,5 @@ func (h *BotHandler) handleMessage(ctx context.Context, b *bot.Bot, update *mode
 		})
 		return
 	}
-
 	log.Printf("Successfully sent %s for shortcode %s", mediaType, shortcode)
 }

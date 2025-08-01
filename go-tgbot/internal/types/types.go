@@ -1,6 +1,7 @@
 package types
 
 type Config struct {
-	TelegramBotToken string `json:"telegram_bot_token"`
-	ApiBaseURL       string `json:"api_base_url"`
+	TelegramBotToken string  `json:"telegram_bot_token"`
+	ApiBaseURL       string  `json:"api_base_url"`
+	AllowedUserIDs   []int64 `json:"allowed_user_ids"`
 }

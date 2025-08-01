@@ -1,19 +1,16 @@
 package types
 
-// IGGraphQLResponseDto represents the main GraphQL response from Instagram
 type IGGraphQLResponseDto struct {
 	Data       DataDto       `json:"data"`
 	Extensions ExtensionsDto `json:"extensions"`
 	Status     string        `json:"status"`
 }
 
-// DataDto contains the main data payload
 type DataDto struct {
 	XdtShortcodeMedia XdtShortcodeMediaDto `json:"xdt_shortcode_media"`
 	User              UserDto              `json:"user,omitempty"`
 }
 
-// UserDto represents an Instagram user's data
 type UserDto struct {
 	ID            string `json:"id"`
 	Username      string `json:"username"`
@@ -23,7 +20,6 @@ type UserDto struct {
 	ProfilePicUrl string `json:"profile_pic_url"`
 }
 
-// XdtShortcodeMediaDto represents Instagram post/reel media data
 type XdtShortcodeMediaDto struct {
 	Typename                    string                           `json:"__typename"`
 	IsXDTGraphMediaInterface    string                           `json:"__isXDTGraphMediaInterface"`
@@ -85,7 +81,6 @@ type XdtShortcodeMediaDto struct {
 	PinnedForUsers              []interface{}                    `json:"pinned_for_users"`
 }
 
-// ClipsMusicAttributionInfoDto represents music attribution data
 type ClipsMusicAttributionInfoDto struct {
 	ArtistName            string `json:"artist_name"`
 	SongName              string `json:"song_name"`
@@ -95,40 +90,34 @@ type ClipsMusicAttributionInfoDto struct {
 	AudioId               string `json:"audio_id"`
 }
 
-// DashInfoDto represents DASH streaming information
 type DashInfoDto struct {
 	IsDashEligible    bool   `json:"is_dash_eligible"`
 	VideoDashManifest string `json:"video_dash_manifest"`
 	NumberOfQualities int    `json:"number_of_qualities"`
 }
 
-// DimensionsDto represents media dimensions
 type DimensionsDto struct {
 	Height int `json:"height"`
 	Width  int `json:"width"`
 }
 
-// DisplayResourceDto represents display resource information
 type DisplayResourceDto struct {
 	Src          string `json:"src"`
 	ConfigWidth  int    `json:"config_width"`
 	ConfigHeight int    `json:"config_height"`
 }
 
-// EdgeMediaPreviewDto represents media preview edge data
 type EdgeMediaPreviewDto struct {
 	Count int                              `json:"count"`
 	Edges []EdgeMediaPreviewCommentEdgeDto `json:"edges"`
 }
 
-// EdgeMediaToParentCommentClassDto represents parent comment edge data
 type EdgeMediaToParentCommentClassDto struct {
 	Count    int                              `json:"count"`
 	PageInfo PageInfoDto                      `json:"page_info"`
 	Edges    []EdgeMediaPreviewCommentEdgeDto `json:"edges"`
 }
 
-// PurpleNodeDto represents a comment node
 type PurpleNodeDto struct {
 	ID                   string                            `json:"id"`
 	Text                 string                            `json:"text"`
@@ -141,23 +130,19 @@ type PurpleNodeDto struct {
 	EdgeThreadedComments *EdgeMediaToParentCommentClassDto `json:"edge_threaded_comments,omitempty"`
 }
 
-// EdgeMediaPreviewCommentEdgeDto represents comment edge data
 type EdgeMediaPreviewCommentEdgeDto struct {
 	Node PurpleNodeDto `json:"node"`
 }
 
-// PageInfoDto represents pagination information
 type PageInfoDto struct {
 	HasNextPage bool    `json:"has_next_page"`
 	EndCursor   *string `json:"end_cursor"`
 }
 
-// EdgeFollowedByClassDto represents follow/like count data
 type EdgeFollowedByClassDto struct {
 	Count int `json:"count"`
 }
 
-// NodeOwnerDto represents a user node owner
 type NodeOwnerDto struct {
 	ID            string `json:"id"`
 	IsVerified    bool   `json:"is_verified"`
@@ -165,24 +150,20 @@ type NodeOwnerDto struct {
 	Username      string `json:"username"`
 }
 
-// EdgeMediaToCaptionClassDto represents caption edge data
 type EdgeMediaToCaptionClassDto struct {
 	Edges []EdgeMediaToCaptionEdgeDto `json:"edges"`
 }
 
-// EdgeMediaToCaptionEdgeDto represents caption edge
 type EdgeMediaToCaptionEdgeDto struct {
 	Node FluffyNodeDto `json:"node"`
 }
 
-// FluffyNodeDto represents a caption node
 type FluffyNodeDto struct {
 	CreatedAt string `json:"created_at"`
 	Text      string `json:"text"`
 	ID        string `json:"id"`
 }
 
-// XdtShortcodeMediaOwnerDto represents the post owner
 type XdtShortcodeMediaOwnerDto struct {
 	ID                        string                 `json:"id"`
 	Username                  string                 `json:"username"`
@@ -202,13 +183,11 @@ type XdtShortcodeMediaOwnerDto struct {
 	EdgeFollowedBy            EdgeFollowedByClassDto `json:"edge_followed_by"`
 }
 
-// SharingFrictionInfoDto represents sharing friction information
 type SharingFrictionInfoDto struct {
 	ShouldHaveSharingFriction bool        `json:"should_have_sharing_friction"`
 	BloksAppUrl               interface{} `json:"bloks_app_url"`
 }
 
-// ExtensionsDto represents GraphQL extensions
 type ExtensionsDto struct {
 	IsFinal bool `json:"is_final"`
 }

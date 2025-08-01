@@ -1,6 +1,5 @@
 package types
 
-// InstagramResponse represents the API response structure
 type InstagramResponse struct {
 	Data struct {
 		XdtShortcodeMedia struct {
