@@ -24,7 +24,7 @@ func New(apiBaseURL string) *Client {
 	}
 }
 
-func (c *Client) GetInstagramPostData(shortcode string) (*types.XdtShortcodeMediaDto, error) {
+func (c *Client) GetInstagramPostData(shortcode string) (*types.DataDto, error) {
 	url := fmt.Sprintf("%s/api/instagram/p/%s", c.baseURL, shortcode)
 
 	var lastErr error
@@ -41,7 +41,7 @@ func (c *Client) GetInstagramPostData(shortcode string) (*types.XdtShortcodeMedi
 		resp, err := c.httpClient.Do(req)
 		if err != nil {
 			lastErr = fmt.Errorf("failed to execute request: %w", err)
-			log.Printf("Attempt %d: failed to execute request for %s: %v. Retrying in %v...", i+1, shortcode, err, retryDelay)
+
 			time.Sleep(retryDelay)
 			retryDelay *= 2
 			continue
@@ -59,7 +59,7 @@ func (c *Client) GetInstagramPostData(shortcode string) (*types.XdtShortcodeMedi
 				return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 			}
 
-			return &response.Data.XdtShortcodeMedia, nil
+			return &response.Data, nil
 		}
 
 		bodyBytes, _ := io.ReadAll(resp.Body)

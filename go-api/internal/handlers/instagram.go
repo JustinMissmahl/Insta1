@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 
 	"instagram-downloader-api/internal/instagram"
@@ -38,14 +37,13 @@ func (h *InstagramHandler) GetInstagramPost(c *gin.Context) {
 
 	response, statusCode, err := h.igClient.GetPostGraphQL(shortcode)
 	if err != nil {
-		log.Printf("Instagram API error: %v", err)
 		utils.RespondWithError(c, http.StatusInternalServerError, "serverError", err.Error())
 		return
 	}
 
 	switch statusCode {
 	case http.StatusOK:
-		// Check if data exists
+		// Check if post data exists
 		if response.Data.XdtShortcodeMedia.ID == "" {
 			utils.RespondWithError(c, http.StatusNotFound, "notFound", "post not found")
 			return
@@ -64,7 +62,6 @@ func (h *InstagramHandler) GetInstagramPost(c *gin.Context) {
 		return
 
 	default:
-		log.Printf("Unexpected status code from Instagram API: %d", statusCode)
 		utils.RespondWithError(c, http.StatusInternalServerError, "serverError", "Failed to fetch post data")
 		return
 	}

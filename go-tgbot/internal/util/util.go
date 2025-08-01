@@ -9,8 +9,7 @@ var (
 )
 
 func ExtractShortcode(url string) string {
-	matches := instagramPostRegex.FindStringSubmatch(url)
-	if len(matches) > 1 {
+	if matches := instagramPostRegex.FindStringSubmatch(url); len(matches) > 1 {
 		return matches[1]
 	}
 	return ""

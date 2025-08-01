@@ -43,7 +43,7 @@ func (h *BotHandler) handleMessage(ctx context.Context, b *bot.Bot, update *mode
 		log.Printf("Invalid URL: %s", update.Message.Text)
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
-			Text:   "Please send a valid Instagram post or reel URL.",
+			Text:   "Please send a valid Instagram post or reel URL. Stories are not supported.",
 		})
 		return
 	}
@@ -66,26 +66,32 @@ func (h *BotHandler) handleMessage(ctx context.Context, b *bot.Bot, update *mode
 	var filePath string
 	var mediaType string
 	var downloadErr error
+	var owner string
+	var mediaURL string
 
-	if postData.IsVideo {
+	// Get post/reel media info
+	owner = postData.XdtShortcodeMedia.Owner.Username
+	if postData.XdtShortcodeMedia.IsVideo {
 		mediaType = "video"
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.Message.Chat.ID,
-			Text:   fmt.Sprintf("Downloading video by %s...", postData.Owner.Username),
-		})
-		filePath, downloadErr = h.apiClient.DownloadVideo(postData.VideoURL, shortcode, downloadPath)
+		mediaURL = postData.XdtShortcodeMedia.VideoURL
 	} else {
 		mediaType = "image"
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.Message.Chat.ID,
-			Text:   fmt.Sprintf("Downloading image by %s...", postData.Owner.Username),
-		})
 		// Get the highest resolution image
-		imageURL := postData.DisplayUrl
-		if len(postData.DisplayResources) > 0 {
-			imageURL = postData.DisplayResources[len(postData.DisplayResources)-1].Src
+		mediaURL = postData.XdtShortcodeMedia.DisplayUrl
+		if len(postData.XdtShortcodeMedia.DisplayResources) > 0 {
+			mediaURL = postData.XdtShortcodeMedia.DisplayResources[len(postData.XdtShortcodeMedia.DisplayResources)-1].Src
 		}
-		filePath, downloadErr = h.apiClient.DownloadImage(imageURL, shortcode, downloadPath)
+	}
+
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   fmt.Sprintf("Downloading %s by %s...", mediaType, owner),
+	})
+
+	if mediaType == "video" {
+		filePath, downloadErr = h.apiClient.DownloadVideo(mediaURL, shortcode, downloadPath)
+	} else {
+		filePath, downloadErr = h.apiClient.DownloadImage(mediaURL, shortcode, downloadPath)
 	}
 
 	if downloadErr != nil {
@@ -103,7 +109,7 @@ func (h *BotHandler) handleMessage(ctx context.Context, b *bot.Bot, update *mode
 		Text:   fmt.Sprintf("Download complete. Sending %s...", mediaType),
 	})
 
-	caption := fmt.Sprintf("%s by %s (@%s)", mediaType, postData.Owner.FullName, postData.Owner.Username)
+	caption := fmt.Sprintf("%s by %s (@%s)", mediaType, postData.XdtShortcodeMedia.Owner.FullName, postData.XdtShortcodeMedia.Owner.Username)
 
 	mediaFile, err := os.Open(filePath)
 	if err != nil {
@@ -119,7 +125,7 @@ func (h *BotHandler) handleMessage(ctx context.Context, b *bot.Bot, update *mode
 	}
 
 	var sendErr error
-	if postData.IsVideo {
+	if mediaType == "video" {
 		_, sendErr = b.SendVideo(ctx, &bot.SendVideoParams{
 			ChatID:  update.Message.Chat.ID,
 			Video:   &models.InputFileUpload{Filename: fmt.Sprintf("%s.mp4", shortcode), Data: bytes.NewReader(mediaData)},

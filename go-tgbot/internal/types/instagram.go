@@ -7,6 +7,21 @@ type IGGraphQLResponseDto struct {
 
 type DataDto struct {
 	XdtShortcodeMedia XdtShortcodeMediaDto `json:"xdt_shortcode_media"`
+	User              UserDto              `json:"user,omitempty"`
+}
+
+type UserDto struct {
+	ID            string `json:"id"`
+	Username      string `json:"username"`
+	FullName      string `json:"full_name"`
+	IsPrivate     bool   `json:"is_private"`
+	IsVerified    bool   `json:"is_verified"`
+	ProfilePicUrl string `json:"profile_pic_url"`
+}
+
+type DimensionsDto struct {
+	Height int `json:"height"`
+	Width  int `json:"width"`
 }
 
 type XdtShortcodeMediaDto struct {

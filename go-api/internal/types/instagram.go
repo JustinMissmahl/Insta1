@@ -10,6 +10,17 @@ type IGGraphQLResponseDto struct {
 // DataDto contains the main data payload
 type DataDto struct {
 	XdtShortcodeMedia XdtShortcodeMediaDto `json:"xdt_shortcode_media"`
+	User              UserDto              `json:"user,omitempty"`
+}
+
+// UserDto represents an Instagram user's data
+type UserDto struct {
+	ID            string `json:"id"`
+	Username      string `json:"username"`
+	FullName      string `json:"full_name"`
+	IsPrivate     bool   `json:"is_private"`
+	IsVerified    bool   `json:"is_verified"`
+	ProfilePicUrl string `json:"profile_pic_url"`
 }
 
 // XdtShortcodeMediaDto represents Instagram post/reel media data

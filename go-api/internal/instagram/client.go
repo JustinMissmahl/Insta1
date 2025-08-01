@@ -67,6 +67,8 @@ func generateRequestBody(shortcode string) string {
 		"hoisted_comment_id":      nil,
 		"hoisted_reply_id":        nil,
 	}
+	docID := "8845758582119845" // Post query doc_id
+	friendlyName := "PolarisPostActionLoadPostQueryQuery"
 
 	variablesJSON, _ := json.Marshal(variables)
 
@@ -92,10 +94,10 @@ func generateRequestBody(shortcode string) string {
 	values.Set("__spin_t", "1743852001")
 	values.Set("__crn", "comet.igweb.PolarisPostRoute")
 	values.Set("fb_api_caller_class", "RelayModern")
-	values.Set("fb_api_req_friendly_name", "PolarisPostActionLoadPostQueryQuery")
+	values.Set("fb_api_req_friendly_name", friendlyName)
 	values.Set("variables", string(variablesJSON))
 	values.Set("server_timestamps", "true")
-	values.Set("doc_id", "8845758582119845")
+	values.Set("doc_id", docID)
 
 	return values.Encode()
 }
@@ -104,6 +106,9 @@ func generateRequestBody(shortcode string) string {
 func (c *Client) GetPostGraphQL(shortcode string) (*types.IGGraphQLResponseDto, int, error) {
 	// Generate request body
 	requestBody := generateRequestBody(shortcode)
+	if requestBody == "" {
+		return nil, 0, fmt.Errorf("failed to generate request body")
+	}
 
 	// Create request
 	req, err := http.NewRequest("POST", instagramGraphQLURL, strings.NewReader(requestBody))
@@ -111,7 +116,7 @@ func (c *Client) GetPostGraphQL(shortcode string) (*types.IGGraphQLResponseDto, 
 		return nil, 0, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// Set headers exactly matching the TypeScript implementation
+	// Set headers
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Accept-Language", "en-US,en;q=0.5")
@@ -130,9 +135,8 @@ func (c *Client) GetPostGraphQL(shortcode string) (*types.IGGraphQLResponseDto, 
 	req.Header.Set("Cache-Control", "no-cache")
 	req.Header.Set("Referer", fmt.Sprintf("https://www.instagram.com/p/%s/", shortcode))
 
-	// Get the next session ID and add it as a cookie
-	sessionID := c.getNextSessionID()
-	if sessionID != "" {
+	// Add session cookie
+	if sessionID := c.getNextSessionID(); sessionID != "" {
 		req.Header.Set("Cookie", fmt.Sprintf("sessionid=%s", sessionID))
 	}
 
